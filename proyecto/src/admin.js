@@ -37,8 +37,14 @@ estudiantesDiv.innerHTML = `<p>Error cargando estudiantes:
 ${errorEst.message}</p>`;
 return;
 }
+
+if (user.email !== "andres.solers@uniagustiniana.edu.co") {
+app.innerHTML = "<p>⛔ No tienes permisos para acceder a este panel.</p>";
+return;
+}
+
 estudiantesDiv.innerHTML = `
-<h3>‍ Lista de Estudiantes</h3>
+<h3>‍🧑‍🎓 Lista de Estudiantes</h3>
 ${
 estudiantes.length === 0
 ? "<p>No hay estudiantes registrados.</p>"
@@ -57,7 +63,7 @@ style="margin-left:8px;">️ Eliminar</button>
 </ul>`
 }
 `;
-// ----- Cargar actividades con joins para traer estudiante y curso-----
+// ----- Cargar actividades con joins para traer estudiante y curso -----
 // Nota: dependiendo de cómo estén definidas las relaciones en Supabase,
 // la propiedad puede llamarse 'estudiantes' o 'estudiante' y venir como array o como objeto.
 
@@ -162,55 +168,47 @@ setTimeout(() => mostrarAdmin(), 700);
 // ----- Event: guardar notas -----
 const guardarBtn = document.getElementById("guardar-notas");
 if (guardarBtn) {
-  guardarBtn.addEventListener("click", async () => {
-    const inputs = document.querySelectorAll(".nota-input");
-    let errores = 0;
+guardarBtn.addEventListener("click", async () => {
+const inputs = document.querySelectorAll(".nota-input");
+let errores = 0;
+for (const input of inputs) {
+const id = input.getAttribute("data-id");
+const raw = input.value;
+// permitir vacíos (no actualizar) o números
+if (raw === "") continue;
+const nota = parseFloat(raw);
+if (isNaN(nota)) {
+errores++;
+continue;
+}
+const { error } = await supabase.from("actividades").update({
+nota }).eq("id", id);
+if (error) errores++;
+}
+if (errores > 0) {
 
-    for (const input of inputs) {
-      const id = input.getAttribute("data-id");
-      const raw = input.value;
-
-      // permitir vacíos (no actualizar) o números
-      if (raw === "") continue;
-      const nota = parseFloat(raw);
-      if (isNaN(nota)) {
-        errores++;
-        continue;
-      }
-
-      const { error } = await supabase
-        .from("actividades")
-        .update({ nota })
-        .eq("id", id);
-      if (error) errores++;
-    }
-
-    if (errores > 0) {
-      mensaje.textContent =
-        "⚠️ Algunas notas no se actualizaron correctamente.";
-      mensaje.style.color = "orange";
-    } else {
-      mensaje.textContent = "✅ Notas actualizadas correctamente.";
-      mensaje.style.color = "green";
-    }
-
-    // opcional: refrescar datos
-    setTimeout(() => mostrarAdmin(), 800);
-  });
-} // ✅ Cierra el if(guardarBtn)
-
+mensaje.textContent = "⚠️ Algunas notas no se actualizaron correctamente.";
+mensaje.style.color = "orange";
+} else {
+mensaje.textContent = "✅ Notas actualizadas correctamente.";
+mensaje.style.color = "green";
+}
+// opcional: refrescar datos
+setTimeout(() => mostrarAdmin(), 800);
+});
+}
+}
 /** Helpers para escapar texto y atributos (seguridad básica HTML) */
 function escapeHtml(str) {
-  if (str == null) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+if (str == null) return "";
+return String(str)
+.replace(/&/g, "&amp;")
+.replace(/</g, "&lt;")
+.replace(/>/g, "&gt;")
+.replace(/"/g, "&quot;")
+.replace(/'/g, "&#039;");
 }
-
 function escapeAttr(str) {
-  if (str == null) return "";
-  return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+if (str == null) return "";
+return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
